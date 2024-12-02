@@ -1,71 +1,136 @@
 # Greenplum-PySpark Connector
 
-A Python connector for seamless data integration between Greenplum (ADB) and PySpark.
+Коннектор для интеграции Greenplum (ADB) с PySpark, обеспечивающий эффективную передачу и обработку данных.
 
-## Features
+## Возможности
 
-- Easy-to-use interface for reading and writing data between Greenplum and PySpark
-- Support for custom SQL queries
-- Configurable connection parameters
-- Type-safe implementation with proper error handling
+- Простой интерфейс для чтения и записи данных между Greenplum и PySpark
+- Поддержка пользовательских SQL-запросов
+- Настраиваемые параметры подключения
+- Типобезопасная реализация с обработкой ошибок
+- Поддержка параллельной обработки данных
 
-## Requirements
+## Требования
 
 - Python 3.7+
 - PySpark 3.4.1
 - psycopg2-binary 2.9.9
 - pandas 2.1.1
-- PostgreSQL JDBC driver (postgresql-42.6.0.jar)
+- PostgreSQL JDBC драйвер (postgresql-42.6.0.jar)
 
-## Installation
+## Установка
 
-1. Clone the repository
-2. Install the required dependencies:
+1. Клонируйте репозиторий:
+```bash
+git clone https://github.com/one6way/gp-spark-connector.git
+```
+
+2. Установите зависимости:
 ```bash
 pip install -r requirements.txt
 ```
-3. Download PostgreSQL JDBC driver:
+
+3. Скачайте PostgreSQL JDBC драйвер:
 ```bash
-wget https://jdbc.postgresql.org/download/postgresql-42.6.0.jar
+curl -O https://jdbc.postgresql.org/download/postgresql-42.6.0.jar
 ```
 
-## Usage
+## Использование
 
 ```python
 from greenplum_connector import GreenplumConnector
 
-# Initialize connector
+# Инициализация коннектора
 connector = GreenplumConnector(
-    host="your_greenplum_host",
+    host="ваш_хост_greenplum",
     port=5432,
-    database="your_database",
-    user="your_username",
-    password="your_password"
+    database="ваша_база_данных",
+    user="пользователь",
+    password="пароль"
 )
 
-# Read data from Greenplum table
-df = connector.read_table("example_table")
+# Чтение данных из таблицы Greenplum
+df = connector.read_table("имя_таблицы")
 
-# Write data to Greenplum
-connector.write_table(df, "output_table", mode="overwrite")
+# Запись данных в Greenplum
+connector.write_table(df, "выходная_таблица", mode="overwrite")
 
-# Execute custom query
-result_df = connector.execute_query("SELECT * FROM example_table WHERE column > 100")
+# Выполнение произвольного SQL-запроса
+result_df = connector.execute_query("SELECT * FROM таблица WHERE условие > 100")
 ```
 
-See `example_usage.py` for more detailed examples.
+Более подробные примеры можно найти в файле `example_usage.py`.
 
-## Configuration
+## Конфигурация
 
-The connector supports the following configuration parameters:
+Коннектор поддерживает следующие параметры:
 
-- `host`: Greenplum host address
-- `port`: Greenplum port (default: 5432)
-- `database`: Database name
-- `user`: Database username
-- `password`: Database password
-- `spark_master`: Spark master URL (default: "local[*]")
+- `host`: Адрес хоста Greenplum
+- `port`: Порт Greenplum (по умолчанию: 5432)
+- `database`: Имя базы данных
+- `user`: Имя пользователя
+- `password`: Пароль
+- `spark_master`: URL мастер-узла Spark (по умолчанию: "local[*]")
 
-## Contributing
+## Как это работает
 
-Feel free to submit issues, fork the repository, and create pull requests for any improvements.
+1. **Чтение данных**:
+   - Формируется JDBC URL для подключения к Greenplum
+   - Данные загружаются в Spark DataFrame через JDBC
+   - Поддерживается параллельное чтение для повышения производительности
+
+2. **Обработка данных**:
+   - Данные обрабатываются с использованием всех возможностей Spark
+   - Поддерживаются все операции Spark DataFrame (фильтрация, группировка, агрегация)
+
+3. **Запись данных**:
+   - Результаты обработки записываются обратно в Greenplum
+   - Поддерживаются режимы append (добавление) и overwrite (перезапись)
+
+## Примеры использования
+
+### Базовый пример:
+```python
+# Чтение данных
+df = connector.read_table("sales_data")
+
+# Обработка
+processed_df = df.filter(df.amount > 1000) \
+                 .groupBy("category") \
+                 .agg({"amount": "sum"})
+
+# Запись результатов
+connector.write_table(processed_df, "sales_summary")
+```
+
+### Пример с SQL-запросом:
+```python
+query = """
+    SELECT 
+        category,
+        SUM(amount) as total_amount,
+        COUNT(*) as transactions
+    FROM sales_data
+    WHERE date >= '2023-01-01'
+    GROUP BY category
+    HAVING SUM(amount) > 1000000
+"""
+result_df = connector.execute_query(query)
+```
+
+## Производительность
+
+- Параллельная обработка данных с помощью Spark
+- Эффективная передача данных через JDBC
+- Оптимизированные операции чтения и записи
+
+## Участие в разработке
+
+Если у вас есть предложения по улучшению коннектора или вы нашли ошибку:
+1. Создайте Issue в репозитории
+2. Предложите Pull Request с исправлениями
+3. Опишите подробно предлагаемые изменения
+
+## Лицензия
+
+MIT License
